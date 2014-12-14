@@ -13,7 +13,7 @@ public class Operations {
             "iconst_5", "lconst_0", "lconst_1", "fconst_0", "fconst_1", "fconst_2", "dconst_0", "dconst_1",
 
             /* 0x10 - 0x1F */
-            "bipush", "sipush", "ldc, ldc_w, ldc2_w", "ldc_w", "ldc2_w", "iload", "lload", "fload",
+            "bipush", "sipush", "ldc/ldc_w/ldc2_w", "ldc_w", "ldc2_w", "iload", "lload", "fload",
             "dload", "aload", "iload_0", "iload_1", "iload_2", "iload_3", "lload_0", "lload_1",
 
             /* 0x20 - 0x2F */

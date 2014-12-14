@@ -19,13 +19,9 @@ public class CatMethodVisitor extends MethodVisitor {
         this.analyzer = analyzer;
     }
 
-    private void countOpcode (int opcode) {
-        analyzer.getOperations ()[opcode].incrementCount ();
-    }
-
     @Override
     public void visitInsn (int opcode) {
-        countOpcode (opcode);
+        analyzer.processOperation (opcode);
 
         /* Add int constants. */
         {
@@ -62,7 +58,7 @@ public class CatMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitIntInsn (int opcode, int operand) {
-        countOpcode (opcode);
+        analyzer.processOperation (opcode);
 
         if (opcode != Opcodes.NEWARRAY) {
             analyzer.getIntegerConstantTable ().count (operand);
@@ -73,50 +69,50 @@ public class CatMethodVisitor extends MethodVisitor {
     public void visitVarInsn (int opcode, int var) {
         if (var <= 3) {
             switch (opcode) {
-                case Opcodes.ILOAD: countOpcode (0x1A + var); break; /* iload_0 */
-                case Opcodes.LLOAD: countOpcode (0x1E + var); break; /* lload_0 */
-                case Opcodes.FLOAD: countOpcode (0x22 + var); break; /* fload_0 */
-                case Opcodes.DLOAD: countOpcode (0x26 + var); break; /* dload_0 */
-                case Opcodes.ALOAD: countOpcode (0x2A + var); break; /* aload_0 */
-                case Opcodes.ISTORE: countOpcode (0x3B + var); break; /* istore_0 */
-                case Opcodes.LSTORE: countOpcode (0x3F + var); break; /* lstore_0 */
-                case Opcodes.FSTORE: countOpcode (0x43 + var); break; /* fstore_0 */
-                case Opcodes.DSTORE: countOpcode (0x47 + var); break; /* dstore_0 */
-                case Opcodes.ASTORE: countOpcode (0x4B + var); break; /* astore_0 */
+                case Opcodes.ILOAD: analyzer.processOperation (0x1A + var); break; /* iload_0 */
+                case Opcodes.LLOAD: analyzer.processOperation (0x1E + var); break; /* lload_0 */
+                case Opcodes.FLOAD: analyzer.processOperation (0x22 + var); break; /* fload_0 */
+                case Opcodes.DLOAD: analyzer.processOperation (0x26 + var); break; /* dload_0 */
+                case Opcodes.ALOAD: analyzer.processOperation (0x2A + var); break; /* aload_0 */
+                case Opcodes.ISTORE: analyzer.processOperation (0x3B + var); break; /* istore_0 */
+                case Opcodes.LSTORE: analyzer.processOperation (0x3F + var); break; /* lstore_0 */
+                case Opcodes.FSTORE: analyzer.processOperation (0x43 + var); break; /* fstore_0 */
+                case Opcodes.DSTORE: analyzer.processOperation (0x47 + var); break; /* dstore_0 */
+                case Opcodes.ASTORE: analyzer.processOperation (0x4B + var); break; /* astore_0 */
             }
         }else {
-            countOpcode (opcode);
+            analyzer.processOperation (opcode);
         }
     }
 
     @Override
     public void visitTypeInsn (int opcode, String type) {
-        countOpcode (opcode);
+        analyzer.processOperation (opcode);
     }
 
     @Override
     public void visitFieldInsn (int opcode, String owner, String name, String desc) {
-        countOpcode (opcode);
+        analyzer.processOperation (opcode);
     }
 
     @Override
     public void visitMethodInsn (int opcode, String owner, String name, String desc, boolean itf) {
-        countOpcode (opcode);
+        analyzer.processOperation (opcode);
     }
 
     @Override
     public void visitInvokeDynamicInsn (String name, String desc, Handle bsm, Object... bsmArgs) {
-        countOpcode (Opcodes.INVOKEDYNAMIC);
+        analyzer.processOperation (Opcodes.INVOKEDYNAMIC);
     }
 
     @Override
     public void visitJumpInsn (int opcode, Label label) {
-        countOpcode (opcode);
+        analyzer.processOperation (opcode);
     }
 
     @Override
     public void visitLdcInsn (Object cst) {
-        countOpcode (Opcodes.LDC);
+        analyzer.processOperation (Opcodes.LDC);
 
         if (cst instanceof Long) {
             analyzer.getLongConstantTable ().count ((Long) cst);
@@ -127,22 +123,22 @@ public class CatMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitIincInsn (int var, int increment) {
-        countOpcode (Opcodes.IINC);
+        analyzer.processOperation (Opcodes.IINC);
     }
 
     @Override
     public void visitTableSwitchInsn (int min, int max, Label dflt, Label... labels) {
-        countOpcode (Opcodes.TABLESWITCH);
+        analyzer.processOperation (Opcodes.TABLESWITCH);
     }
 
     @Override
     public void visitLookupSwitchInsn (Label dflt, int[] keys, Label[] labels) {
-        countOpcode (Opcodes.LOOKUPSWITCH);
+        analyzer.processOperation (Opcodes.LOOKUPSWITCH);
     }
 
     @Override
     public void visitMultiANewArrayInsn (String desc, int dims) {
-        countOpcode (Opcodes.MULTIANEWARRAY);
+        analyzer.processOperation (Opcodes.MULTIANEWARRAY);
     }
 
 }

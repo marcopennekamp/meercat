@@ -1,24 +1,31 @@
 package me.pennekamp.meercat;
 
-import me.pennekamp.meercat.data.CountableEntity;
-import me.pennekamp.meercat.data.IntegerConstant;
-import me.pennekamp.meercat.data.LongConstant;
-import me.pennekamp.meercat.data.Operation;
+import me.pennekamp.meercat.data.*;
+import me.pennekamp.meercat.visual.CountableTable;
+import me.pennekamp.meercat.visual.Format;
 import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 
 import java.io.*;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class Analyzer {
 
+    private static final int MAX_OP_QUEUE = 3;
+
     private Operation[] operations;
-    private ConstantTable<Long, LongConstant> longConstantTable = new ConstantTable<> (new LongConstant.Generator ());
-    private ConstantTable<Integer, IntegerConstant> integerConstantTable = new ConstantTable<> (new IntegerConstant.Generator ());
+    private List<Integer> lastOperations = new LinkedList<> ();
+    private CountableTable<Integer, K2Gram> k2Grams = new CountableTable<Integer, K2Gram> (new K2Gram.Generator ()) {{
+        widths[0] = 60;
+    }};
+    private CountableTable<Integer, K3Gram> k3Grams = new CountableTable<Integer, K3Gram> (new K3Gram.Generator ()) {{
+        widths[0] = 60;
+    }};
+    private CountableTable<Long, LongConstant> longConstantTable = new CountableTable<> (new LongConstant.Generator ());
+    private CountableTable<Integer, IntegerConstant> integerConstantTable = new CountableTable<> (new IntegerConstant.Generator ());
 
     public Analyzer () {
         initOperations ();
@@ -28,6 +35,35 @@ public class Analyzer {
         operations = new Operation[Operations.mnemonics.length];
         for (int i = 0; i < Operations.mnemonics.length; ++i) {
             operations[i] = new Operation (i, Operations.mnemonics[i]);
+        }
+    }
+
+    public void processOperation (int opcode) {
+        operations[opcode].incrementCount ();
+
+        /* Add to last operations. */
+        if (lastOperations.size () > MAX_OP_QUEUE) {
+            lastOperations.remove (0);
+        }
+        lastOperations.add (opcode);
+
+        /* Fill 2-gram. */
+        int k2GramOffset = lastOperations.size () - 2;
+        if (k2GramOffset >= 0) {
+            int opcode0 = lastOperations.get (k2GramOffset);
+            int opcode1 = lastOperations.get (k2GramOffset + 1);
+            int key = K2Gram.getKey (opcode0, opcode1);
+            k2Grams.count (key);
+        }
+
+        /* Fill 3-gram. */
+        int k3GramOffset = lastOperations.size () - 3;
+        if (k3GramOffset >= 0) {
+            int opcode0 = lastOperations.get (k3GramOffset);
+            int opcode1 = lastOperations.get (k3GramOffset + 1);
+            int opcode2 = lastOperations.get (k3GramOffset + 2);
+            int key = K3Gram.getKey (opcode0, opcode1, opcode2);
+            k3Grams.count (key);
         }
     }
 
@@ -55,6 +91,8 @@ public class Analyzer {
         Format.printTable (writer, headings, widths, rows.toArray (new Object[rows.size ()][]));
         writer.println ();
 
+        writer.println (k2Grams.report ());
+        writer.println (k3Grams.report ());
         writer.println (longConstantTable.report ());
         writer.println (integerConstantTable.report ());
 
@@ -99,11 +137,11 @@ public class Analyzer {
         return operations;
     }
 
-    public ConstantTable<Long, LongConstant> getLongConstantTable () {
+    public CountableTable<Long, LongConstant> getLongConstantTable () {
         return longConstantTable;
     }
 
-    public ConstantTable<Integer, IntegerConstant> getIntegerConstantTable () {
+    public CountableTable<Integer, IntegerConstant> getIntegerConstantTable () {
         return integerConstantTable;
     }
 

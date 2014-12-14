@@ -1,4 +1,4 @@
-package me.pennekamp.meercat;
+package me.pennekamp.meercat.visual;
 
 import java.io.PrintWriter;
 import java.util.Arrays;

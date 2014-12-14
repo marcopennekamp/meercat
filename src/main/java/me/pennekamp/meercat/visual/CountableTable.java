@@ -1,4 +1,4 @@
-package me.pennekamp.meercat;
+package me.pennekamp.meercat.visual;
 
 import me.pennekamp.meercat.data.CountableEntity;
 
@@ -6,23 +6,26 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
-public class ConstantTable<T, CT extends CountableEntity> {
+public class CountableTable<TKey, TCountable extends CountableEntity> {
 
     public static final int MAX_ROWS = 25;
 
-    private ConstantGenerator<T, CT> generator;
-    private Map<T, CT> constants = new HashMap<> ();
-    private long total = 0;
+    protected String[] headings = new String[] { "Value", "Count", "%" };
+    protected int[] widths = new int[] { 30, 30, 30 };
 
-    public ConstantTable (ConstantGenerator<T, CT> generator) {
+    protected CountableGenerator<TKey, TCountable> generator;
+    protected Map<TKey, TCountable> entities = new HashMap<> ();
+    protected long total = 0;
+
+    public CountableTable (CountableGenerator<TKey, TCountable> generator) {
         this.generator = generator;
     }
 
-    public void count (T value) {
-        CT entity = constants.get (value);
+    public void count (TKey value) {
+        TCountable entity = entities.get (value);
         if (entity == null) {
             entity = generator.generate (value);
-            constants.put (value, entity);
+            entities.put (value, entity);
         }
         entity.incrementCount ();
         total += 1;
@@ -34,19 +37,16 @@ public class ConstantTable<T, CT extends CountableEntity> {
         StringWriter stringWriter = new StringWriter ();
         PrintWriter writer = new PrintWriter (stringWriter);
 
-        String[] headings = new String[] { "Value", "Count", "%" };
-        int[] widths = new int[] { 30, 30, 30 };
-
         List<Object[]> rows = new ArrayList<> ();
 
-        Collection<CT> values = constants.values ();
+        Collection<TCountable> values = entities.values ();
 
-        List<CT> valueList = new ArrayList<> (values);
+        List<TCountable> valueList = new ArrayList<> (values);
         Collections.sort (valueList, new CountableEntity.CountComparator ());
-        for (CT constant : valueList) {
+        for (TCountable constant : valueList) {
             if (rows.size () > MAX_ROWS) break;
 
-            rows.add (new Object[] { constant.toString (), constant.getCount (), constant.getPercentageFormatted () });
+            rows.add (new Object[]{constant.toString (), constant.getCount (), constant.getPercentageFormatted ()});
         }
 
         Format.printTable (writer, headings, widths, rows.toArray (new Object[rows.size ()][]));
@@ -55,7 +55,7 @@ public class ConstantTable<T, CT extends CountableEntity> {
     }
 
     private void computePercentages () {
-        Collection<CT> values = constants.values ();
+        Collection<TCountable> values = entities.values ();
         for (CountableEntity entity : values) {
             entity.setPercentage (((double) entity.getCount () / (double) total) * 100.0);
         }
